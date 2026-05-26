@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0A0B0D;
+    color: #E2E8F0;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Custom terminal scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0B0D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E2028;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00D4FF;
+}
+
+/* Pulse animation for running state */
+@keyframes activePulse {
+  0%, 100% {
+    border-color: #1E2028;
+    box-shadow: 0 0 0 0px rgba(0, 212, 255, 0);
+  }
+  50% {
+    border-color: #00D4FF;
+    box-shadow: 0 0 8px 1px rgba(0, 212, 255, 0.4);
+  }
+}
+
+.running-node-pulse {
+  animation: activePulse 2s infinite ease-in-out;
+}
+
+/* Glimmer/Glow border effects */
+.glow-cyan {
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.25);
+  border-color: #00D4FF !important;
+}
+
+.glow-green {
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.25);
+  border-color: #00FF88 !important;
+}
+
+.glow-amber {
+  box-shadow: 0 0 15px rgba(255, 184, 0, 0.25);
+  border-color: #FFB800 !important;
+}
+
+.glow-crimson {
+  box-shadow: 0 0 15px rgba(255, 68, 68, 0.25);
+  border-color: #FF4444 !important;
+}
+
+/* Scanline visual overlay effect */
+.terminal-overlay {
+  pointer-events: none;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+}

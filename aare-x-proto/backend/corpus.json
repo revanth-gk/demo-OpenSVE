@@ -1,0 +1,146 @@
+[
+  {
+    "doc_id": "doc_001",
+    "title": "Raft Consensus Log Replication Optimization",
+    "content": "Raft consensus ensures state machine replication by electing a leader who coordinates log replication. In high-throughput settings, pipelining AppendEntries RPCs avoids blocking on network round-trip times (RTT). To prevent state divergence during network partitions, the leader must track matching indexes via matchIndex[] and nextIndex[] arrays. When a conflict is detected (e.g., terms mismatch), the leader backtracks nextIndex decrementally or performs batch conflicts checks using binary search on historical terms.",
+    "domain": "distributed systems",
+    "doc_type": "api_doc",
+    "created_at": "2026-01-10T12:00:00Z"
+  },
+  {
+    "doc_id": "doc_002",
+    "title": "HNSW (Hierarchical Navigable Small World) Index Graph Construction",
+    "content": "HNSW is a multi-layer graph-based structure for fast approximate nearest neighbor (ANN) search. The top layers contain long-range links with lower node density, similar to skip lists. Construction uses a probability parameter mL to determine the maximum level assigned to each node. For distance metrics, L2 Euclidean distance and Cosine Similarity are computed using vector SIMD instructions. A heuristic edge selection algorithm keeps connection counts capped at parameter M while ensuring diverse direction clustering to prevent trapping search paths in local minima.",
+    "domain": "databases",
+    "doc_type": "general",
+    "created_at": "2026-02-15T09:30:00Z"
+  },
+  {
+    "doc_id": "doc_003",
+    "title": "LLM Context Window Compression & Attention Optimization",
+    "content": "Optimizing LLM context windows involves techniques like FlashAttention and Key-Value (KV) cache compression. KV caching avoids recomputing key-value matrices for past tokens. Under memory pressure, streaming LLM queries prune KV cache entries via attention weight tracking (e.g., keeping only 'attention sinks' or recently activated tokens). RoPE (Rotary Position Embedding) scaling allows model extrapolation beyond training limits by modifying angular frequencies dynamically based on sequence lengths.",
+    "domain": "AI compiler",
+    "doc_type": "general",
+    "created_at": "2026-03-01T14:45:00Z"
+  },
+  {
+    "doc_id": "doc_004",
+    "title": "Multi-Hop Query Planning over Heterogeneous Databases",
+    "content": "AARE-X Query Planner breaks down complex, multi-hop user queries into a Directed Acyclic Graph (DAG) of physical retrieval tasks. A multi-hop query begins at n_retrieve_intent, traverses n_retrieve_vector and n_retrieve_bm25, and joins results at n_retrieve_graph. If conflict flags are triggered, the engine performs self-correction loops. The planner uses estimated latency budget boundaries to swap between high-precision graph retrieval and low-latency cache retrieval dynamically.",
+    "domain": "databases",
+    "doc_type": "code",
+    "created_at": "2026-04-20T10:15:00Z"
+  },
+  {
+    "doc_id": "doc_005",
+    "title": "Paxos Consensus Synods and Proposer Protocols",
+    "content": "Classic Paxos splits consensus into Phase 1 (Prepare/Promise) and Phase 2 (Accept/Accepted). If a proposer receives promises from a majority, it chooses the value associated with the highest proposal number. In Multi-Paxos, the proposer phase is executed once to elect a master, avoiding Phase 1 latency for subsequent logs. A conflict occurs when two proposers attempt concurrent writes without a master lease, leading to live-lock conditions resolved by random back-off intervals.",
+    "domain": "distributed systems",
+    "doc_type": "api_doc",
+    "created_at": "2026-01-20T08:00:00Z"
+  },
+  {
+    "doc_id": "doc_006",
+    "title": "IVF-PQ (Inverted File Product Quantization) Memory Footprints",
+    "content": "Product Quantization (PQ) compresses high-dimensional vectors by dividing spaces into M orthogonal subspaces and quantizing each subspace into centroids. In IVF-PQ, vectors are first clustered into coarse Voronoi cells. Search queries only calculate distances against vectors in the closest inverted lists (centroids). This strategy reduces RAM utilization by 90% compared to flat indexes but can suffer from recall drop if index parameters (nlist, nprobe) are configured sub-optimally.",
+    "domain": "databases",
+    "doc_type": "general",
+    "created_at": "2026-02-28T16:20:00Z"
+  },
+  {
+    "doc_id": "doc_007",
+    "title": "Tensor Slicing & Pipeline Parallelism in LLM Inference",
+    "content": "In distributed LLM training and inference, tensor parallelism (e.g. Megatron-LM) splits self-attention weight matrices across GPUs column-wise and row-wise, requiring All-Reduce operations. Pipeline parallelism (e.g. GPipe) splits layers sequentially across nodes. To avoid idle GPU periods (bubbles), micro-batches are scheduled in 1F1B (One Forward, One Backward) schedules. Communication overheads are mitigated by overlapping computation with cross-node Ring-AllReduce collectives.",
+    "domain": "AI compiler",
+    "doc_type": "code",
+    "created_at": "2026-03-12T11:10:00Z"
+  },
+  {
+    "doc_id": "doc_008",
+    "title": "Vector Similarity Metric Implementations in Rust",
+    "content": "This Rust library module implements dot product, cosine similarity, and L2 distance calculation using AVX-512 SIMD intrinsics. To maximize throughput, loops are unrolled to match the CPU's register width. For cosine similarity: `cos = (A . B) / (||A|| * ||B||)`. The denominator norms are pre-calculated and cached alongside the quantized index vector blocks to prevent repetitive division operations during nearest-neighbor graph traversals.",
+    "domain": "databases",
+    "doc_type": "code",
+    "created_at": "2026-05-02T15:30:00Z"
+  },
+  {
+    "doc_id": "doc_009",
+    "title": "Two-Phase Commit (2PC) Failure Scenarios and Recovery",
+    "content": "Two-Phase Commit is a blocking atomic commitment protocol. The coordinator issues PREPARE to participants. If all vote YES, the coordinator broadcasts COMMIT. A severe vulnerability is coordinator failure after participants vote YES but before COMMIT is sent. Participants remain in an uncertain state, holding locks indefinitely. To bypass this, modern systems use Three-Phase Commit (3PC) or bind lock expiration leases managed by Raft state replication groups.",
+    "domain": "distributed systems",
+    "doc_type": "api_doc",
+    "created_at": "2026-01-25T17:40:00Z"
+  },
+  {
+    "doc_id": "doc_010",
+    "title": "Dynamic Cache Invalidation and Leases",
+    "content": "To maintain sequential consistency across distributed caches, nodes employ invalidation protocols using lease times. When a node performs a write operation, it invalidates cache entries on peer servers. Peer servers must acknowledge the invalidation before the write is committed. Lease periods define the interval a cached value is guaranteed to be valid without requiring lock verification, balancing network request overhead against eventual consistency latencies.",
+    "domain": "distributed systems",
+    "doc_type": "general",
+    "created_at": "2026-05-10T09:00:00Z"
+  },
+  {
+    "doc_id": "doc_011",
+    "title": "Sparse-Dense Hybrid Retrieval Engine",
+    "content": "Sparse retrieval (BM25) captures exact keyword terms, whereas dense retrieval (vector embeddings) captures semantic query meanings. Hybrid retrieval pipelines combine these ranks using Reciprocal Rank Fusion (RRF). RRF calculates: `RRF_Score(d) = sum(1 / (k + rank_i(d)))` where rank_i is the document rank from retriever i, and k is a smoothing constant (typically 60). This approach guarantees robust results even when queries contain ambiguous engineering jargon.",
+    "domain": "databases",
+    "doc_type": "code",
+    "created_at": "2026-05-18T10:00:00Z"
+  },
+  {
+    "doc_id": "doc_012",
+    "title": "Speculative Decoding for Low-Latency LLM Serving",
+    "content": "Speculative decoding speeds up autoregressive LLM inference by pairing a small, fast draft model with a large target model. The draft model predicts a sequence of K tokens. The target model evaluates all K tokens in parallel using a single forward pass. Tokens that fail the target model's acceptance threshold are rejected, and the draft model's state is rolled back. This technique yields a 2x-3x speedup while preserving target model distribution properties exactly.",
+    "domain": "AI compiler",
+    "doc_type": "general",
+    "created_at": "2026-04-05T13:10:00Z"
+  },
+  {
+    "doc_id": "doc_013",
+    "title": "Chubby Distributed Lock Service Architecture",
+    "content": "Chubby provides coarse-grained distributed locking via a replicated database using Paxos consensus. Clients acquire locks by maintaining active lock sessions with Chubby replicas. Sessions are kept alive via periodic KeepAlive RPC handshakes. If a client fails to renew its session within the lease time, Chubby revokes the lock and invalidates client-side cached data. Chubby uses local memory cache replication to optimize read throughput.",
+    "domain": "distributed systems",
+    "doc_type": "api_doc",
+    "created_at": "2026-02-05T14:00:00Z"
+  },
+  {
+    "doc_id": "doc_014",
+    "title": "Quantization-Aware Training (QAT) vs Post-Training Quantization",
+    "content": "Quantization maps floating point values (FP32) to low-precision formats (INT8, FP4). Post-Training Quantization (PTQ) quantizes weights directly but can lead to accuracy degradation, especially in outlier weights. Quantization-Aware Training (QAT) models quantization noise in the forward pass using fake quantization operations, allowing backpropagation algorithms to adapt network weights to precision constraints. QAT is highly recommended for mobile model deployments.",
+    "domain": "AI compiler",
+    "doc_type": "general",
+    "created_at": "2026-03-25T16:00:00Z"
+  },
+  {
+    "doc_id": "doc_015",
+    "title": "LSM-Tree (Log-Structured Merge-Tree) Write Amplification",
+    "content": "LSM-Trees optimize write throughput by writing updates to an in-memory MemTable, which is flushed to disk as SSTables. SSTables are organized in levels. Compaction runs in the background to merge SSTables, delete obsolete records, and minimize read amplification. However, compaction causes high Write Amplification Factors (WAF), taxing disk I/O. Strategies like size-tiered compaction reduce write amplification at the expense of temporary disk usage spikes.",
+    "domain": "databases",
+    "doc_type": "general",
+    "created_at": "2026-04-12T10:40:00Z"
+  },
+  {
+    "doc_id": "doc_016",
+    "title": "Conflict-Free Replicated Data Types (CRDTs)",
+    "content": "CRDTs ensure strong eventual consistency across replicas without centralized coordination. State-based CRDTs (CvRDTs) merge state using a join-semilattice merge function that must be commutative, associative, and idempotent. Operation-based CRDTs (CmRDTs) replicate concurrent update operations that must execute in causal order. Typical applications include collaborative editing logs, distributed counters, and globally replicated shopping carts.",
+    "domain": "distributed systems",
+    "doc_type": "general",
+    "created_at": "2026-05-15T11:50:00Z"
+  },
+  {
+    "doc_id": "doc_017",
+    "title": "GPU Memory Hierarchy and Block Execution",
+    "content": "GPU accelerators rely on massive parallelism to hide latency. The execution model groups threads into warps (typically 32 threads) scheduled by Streaming Multiprocessors (SMs). Memory is partitioned into Global Memory (high latency, high capacity), Shared Memory (low latency, shared within a block), and Registers. To optimize GPU kernels, threads must coalesce Global Memory access and avoid Shared Memory bank conflicts.",
+    "domain": "AI compiler",
+    "doc_type": "code",
+    "created_at": "2026-04-30T15:20:00Z"
+  },
+  {
+    "doc_id": "doc_018",
+    "title": "Spanner: Google's Globally Distributed Database",
+    "content": "Spanner provides external consistency (serializability + linearizability) at global scale. It achieves this by using Paxos replication groups and 2-Phase Commit for distributed transactions. Spanner's unique feature is TrueTime: an API that exposes bound clock uncertainty (represented as an interval [earliest, latest]) using GPS receivers and atomic clocks. Spanner assigns monotonically increasing commit timestamps to transactions based on TrueTime limits.",
+    "domain": "distributed systems",
+    "doc_type": "api_doc",
+    "created_at": "2026-01-05T09:00:00Z"
+  }
+]
