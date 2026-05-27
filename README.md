@@ -13,7 +13,7 @@ This repository contains the high-fidelity vertical slice prototype of the AARE-
 ### 1. Run the Backend Server
 Prerequisites: Python 3.10+
 
-```bash
+```bash`
 cd aare-x-proto/backend
 pip install -r requirements.txt
 python main.py

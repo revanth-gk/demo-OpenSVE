@@ -86,6 +86,23 @@ export default function Workbench() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
+  // Refs for tracking real-time values in EventSource closures without stale variables
+  const elapsedTimeRef = useRef<number>(0);
+  const latencyBudgetRef = useRef<number>(latencyBudget);
+  const isRunningRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    elapsedTimeRef.current = elapsedTime;
+  }, [elapsedTime]);
+
+  useEffect(() => {
+    latencyBudgetRef.current = latencyBudget;
+  }, [latencyBudget]);
+
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
+
   // Auto scroll logs
   useEffect(() => {
     if (logsEndRef.current) {
@@ -111,7 +128,9 @@ export default function Workbench() {
 
     // Reset runtime states
     setIsRunning(true);
+    isRunningRef.current = true;
     setElapsedTime(0);
+    elapsedTimeRef.current = 0;
     setTraceResults([]);
     setResponseOutput(null);
     setSelectedDocId(null);
@@ -173,9 +192,14 @@ export default function Workbench() {
     eventSourceRef.current = es;
 
     es.onmessage = (event) => {
+      if (elapsedTimeRef.current > latencyBudgetRef.current) {
+        return;
+      }
+
       if (event.data === "[DONE]") {
         addLog("Orchestrator completed transaction execution pipeline. Graph idle.");
         setIsRunning(false);
+        isRunningRef.current = false;
         if (timerRef.current) clearInterval(timerRef.current);
         es.close();
         return;
@@ -219,6 +243,44 @@ export default function Workbench() {
       es.close();
     };
   };
+
+  // SLA timeout checking hook
+  useEffect(() => {
+    if (isRunning && elapsedTime > latencyBudget) {
+      // Latency budget exceeded!
+      setIsRunning(false);
+      isRunningRef.current = false;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      
+      // Mark running and pending nodes as timeout
+      setNodes(prevNodes => {
+        return prevNodes.map(node => {
+          if (node.data.status === "running" || node.data.status === "pending") {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                status: "timeout",
+                logs: node.data.status === "running" 
+                  ? `SLA breach: Latency budget of ${latencyBudget}s exceeded during execution.`
+                  : `Execution canceled due to upstream SLA latency breach.`
+              }
+            };
+          }
+          return node;
+        });
+      });
+
+      addLog(`[CRITICAL] Latency budget limit of ${latencyBudget}s exceeded! SLA breach detected. Aborting execution graph.`);
+    }
+  }, [elapsedTime, isRunning, latencyBudget]);
 
   useEffect(() => {
     return () => {
@@ -447,6 +509,9 @@ export default function Workbench() {
                     <marker id="arrow-done" viewBox="0 0 10 10" refX="24" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                       <path d="M 0 0 L 10 5 L 0 10 z" fill="#00FF88" />
                     </marker>
+                    <marker id="arrow-timeout" viewBox="0 0 10 10" refX="24" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#FF4444" />
+                    </marker>
                   </defs>
                   {edges.map((edge) => {
                     const srcNode = nodes.find((n) => n.id === edge.source);
@@ -461,12 +526,15 @@ export default function Workbench() {
 
                     let strokeColor = "#1E2028";
                     let markerId = "arrow";
-                    if (srcNode.data.status === "completed") {
+                    if (srcNode.data.status === "completed" && tgtNode.data.status !== "timeout" && tgtNode.data.status !== "error") {
                       strokeColor = "#00FF88";
                       markerId = "arrow-done";
                     } else if (srcNode.data.status === "running") {
                       strokeColor = "#00D4FF";
                       markerId = "arrow-active";
+                    } else if (srcNode.data.status === "timeout" || srcNode.data.status === "error" || tgtNode.data.status === "timeout" || tgtNode.data.status === "error") {
+                      strokeColor = "#FF4444";
+                      markerId = "arrow-timeout";
                     }
 
                     return (
@@ -505,7 +573,7 @@ export default function Workbench() {
                     borderClass = "border-greenAccent bg-[#121815]";
                     textClass = "text-[#00FF88]";
                     glowClass = "glow-green";
-                  } else if (node.data.status === "error") {
+                  } else if (node.data.status === "error" || node.data.status === "timeout") {
                     borderClass = "border-crimsonAccent bg-[#181212]";
                     textClass = "text-crimsonAccent font-bold";
                     glowClass = "glow-crimson";
@@ -536,6 +604,9 @@ export default function Workbench() {
                           )}
                           {node.data.status === "error" && (
                             <span className="text-crimsonAccent animate-bounce">CORRECTING</span>
+                          )}
+                          {node.data.status === "timeout" && (
+                            <span className="text-crimsonAccent animate-pulse font-bold">TIMEOUT</span>
                           )}
                         </div>
                       </div>
@@ -642,7 +713,7 @@ export default function Workbench() {
                   <div className="text-xs text-slate-300 leading-relaxed flex flex-col gap-3">
                     
                     {/* Render response text and replace document tags like [doc_001] with interactable microchips */}
-                    <div className="whitespace-pre-wrap font-sans text-[13px] bg-[#111318]/50 p-4 rounded border border-border">
+                    <div className="whitespace-pre-wrap font-sans text-[13px] bg-[#111318]/50 p-4 rounded border border-border leading-relaxed">
                       {responseOutput.response.split(/(\[doc_\d+\])/).map((segment, index) => {
                         const match = segment.match(/\[(doc_\d+)\]/);
                         if (match) {
@@ -660,7 +731,29 @@ export default function Workbench() {
                             </button>
                           );
                         }
-                        return <span key={index}>{segment}</span>;
+                        
+                        // Parse basic markdown: ### Headers and **Bold**
+                        const headerParts = segment.split(/(### [^\n]+)/);
+                        return (
+                          <span key={index}>
+                            {headerParts.map((hPart, hIdx) => {
+                              if (hPart.startsWith('### ')) {
+                                return <div key={`h-${hIdx}`} className="text-[14px] font-bold text-white mt-4 mb-2 pb-1 border-b border-border/50 uppercase tracking-wide">{hPart.slice(4)}</div>;
+                              }
+                              const boldParts = hPart.split(/(\*\*.*?\*\*)/);
+                              return (
+                                <span key={`p-${hIdx}`}>
+                                  {boldParts.map((bPart, bIdx) => {
+                                    if (bPart.startsWith('**') && bPart.endsWith('**')) {
+                                      return <strong key={`b-${bIdx}`} className="text-cyanAccent font-semibold">{bPart.slice(2, -2)}</strong>;
+                                    }
+                                    return <span key={`t-${bIdx}`}>{bPart}</span>;
+                                  })}
+                                </span>
+                              );
+                            })}
+                          </span>
+                        );
                       })}
                     </div>
 
